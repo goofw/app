@@ -21,7 +21,7 @@ jobs:
       - id: check_version
         run: |
           upstream_version=$(basename $(curl -Ls -o /dev/null -w %{url_effective} https://github.com/SagerNet/sing-box/releases/latest))
-          release_version=$(basename $(curl -Ls -o /dev/null -w %{url_effective} https://github.com/goofw/sing-box/releases/latest))
+          release_version=$(basename $(curl -Ls -o /dev/null -w %{url_effective} https://github.com/goofw/app/releases/latest))
           [ "$upstream_version" != "$release_version" ] && {
             echo "VERSION=$upstream_version" >> $GITHUB_ENV
             echo "PRERELEASE=false" >> $GITHUB_ENV
@@ -30,7 +30,7 @@ jobs:
           }
           
           upstream_version=$(jq -r 'map(select(.prerelease)) | first | .tag_name' <<< $(curl --silent https://api.github.com/repos/SagerNet/sing-box/releases))
-          release_version=$(jq -r 'map(select(.prerelease)) | first | .tag_name' <<< $(curl --silent https://api.github.com/repos/goofw/sing-box/releases))
+          release_version=$(jq -r 'map(select(.prerelease)) | first | .tag_name' <<< $(curl --silent https://api.github.com/repos/goofw/app/releases))
           [ "$upstream_version" != "$release_version" ] && {
             echo "VERSION=$upstream_version" >> $GITHUB_ENV
             echo "PRERELEASE=true" >> $GITHUB_ENV
