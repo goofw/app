@@ -1,0 +1,104 @@
+name: build
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/build.yml'
+      - 'common/redir/redir_darwin.go'
+  schedule:
+    - cron: '4 * * * *'
+    
+jobs:        
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: Mattraks/delete-workflow-runs@main
+        with:
+          retain_days: 1
+          keep_minimum_runs: 5
+          
+      - id: check_version
+        run: |
+          upstream_version=$(basename $(curl -Ls -o /dev/null -w %{url_effective} https://github.com/SagerNet/sing-box/releases/latest))
+          release_version=$(basename $(curl -Ls -o /dev/null -w %{url_effective} https://github.com/goofw/sing-box/releases/latest))
+          [ "$upstream_version" != "$release_version" ] && {
+            echo "VERSION=$upstream_version" >> $GITHUB_ENV
+            echo "PRERELEASE=false" >> $GITHUB_ENV
+            echo "RUN=true" >> $GITHUB_OUTPUT
+            exit
+          }
+          
+          upstream_version=$(jq -r 'map(select(.prerelease)) | first | .tag_name' <<< $(curl --silent https://api.github.com/repos/SagerNet/sing-box/releases))
+          release_version=$(jq -r 'map(select(.prerelease)) | first | .tag_name' <<< $(curl --silent https://api.github.com/repos/goofw/sing-box/releases))
+          [ "$upstream_version" != "$release_version" ] && {
+            echo "VERSION=$upstream_version" >> $GITHUB_ENV
+            echo "PRERELEASE=true" >> $GITHUB_ENV
+            echo "RUN=true" >> $GITHUB_OUTPUT
+          } || echo "RUN=false" >> $GITHUB_OUTPUT
+      
+      - if: steps.check_version.outputs.RUN == 'true'
+        uses: actions/setup-go@v2
+        with:
+          go-version: ^1.18.5
+      
+      - if: steps.check_version.outputs.RUN == 'true'
+        uses: actions/checkout@v2
+        with:
+          repository: SagerNet/sing-box
+          ref: ${{ env.VERSION }}
+          
+      - if: steps.check_version.outputs.RUN == 'true'
+        uses: actions/checkout@v2
+        with:
+          path: patch
+          
+      - if: steps.check_version.outputs.RUN == 'true'
+        run: |
+          cp patch/common/redir/redir_darwin.go common/redir/redir_darwin.go
+          CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 go build -v -trimpath -tags "with_quic,with_grpc,with_ech,with_utls,with_wireguard,with_gvisor" -ldflags "-s -w -buildid=" ./cmd/sing-box
+          tar -zcvf sing-box-darwin-amd64.tar.gz sing-box
+          CGO_ENABLED=0 GOOS=linux GOARCH=arm GOARM=5 go build -v -trimpath -tags "with_quic,with_grpc,with_ech,with_utls" -ldflags "-s -w -buildid=" ./cmd/sing-box
+          tar -zcvf sing-box-linux-armv5.tar.gz sing-box
+          CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -v -trimpath -tags "with_quic,with_grpc,with_wireguard,with_gvisor,with_acme" -ldflags "-s -w -buildid=" ./cmd/sing-box
+          tar -zcvf sing-box-linux-amd64.tar.gz sing-box
+          
+      - if: steps.check_version.outputs.RUN == 'true'
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ env.VERSION }}
+          release_name: ${{ env.VERSION }}
+          prerelease: ${{ env.PRERELEASE }}
+          
+      - if: steps.check_version.outputs.RUN == 'true'
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: sing-box-darwin-amd64.tar.gz
+          asset_name: sing-box-darwin-amd64.tar.gz
+          asset_content_type: application/gzip
+          
+      - if: steps.check_version.outputs.RUN == 'true'
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: sing-box-linux-armv5.tar.gz
+          asset_name: sing-box-linux-armv5.tar.gz
+          asset_content_type: application/gzip
+          
+      - if: steps.check_version.outputs.RUN == 'true'
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: sing-box-linux-amd64.tar.gz
+          asset_name: sing-box-linux-amd64.tar.gz
+          asset_content_type: application/gzip
