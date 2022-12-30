@@ -57,11 +57,11 @@ jobs:
         run: |
           cp patch/common/redir/redir_darwin.go common/redir/redir_darwin.go
           CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 go build -v -trimpath -tags "with_quic,with_grpc,with_ech,with_utls,with_wireguard,with_gvisor" -ldflags "-s -w -buildid=" ./cmd/sing-box
-          tar -zcvf sing-box-darwin-amd64.tar.gz sing-box
+          mv sing-box app && tar -zcvf app-darwin-amd64.tar.gz app
           CGO_ENABLED=0 GOOS=linux GOARCH=arm GOARM=5 go build -v -trimpath -tags "with_quic,with_grpc,with_ech,with_utls" -ldflags "-s -w -buildid=" ./cmd/sing-box
-          tar -zcvf sing-box-linux-armv5.tar.gz sing-box
+          mv sing-box app && tar -zcvf app-linux-armv5.tar.gz app
           CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -v -trimpath -tags "with_quic,with_grpc,with_wireguard,with_gvisor,with_acme" -ldflags "-s -w -buildid=" ./cmd/sing-box
-          tar -zcvf sing-box-linux-amd64.tar.gz sing-box
+          mv sing-box app && tar -zcvf app-linux-amd64.tar.gz app
           
       - if: steps.check_version.outputs.RUN == 'true'
         id: create_release
@@ -79,8 +79,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: sing-box-darwin-amd64.tar.gz
-          asset_name: sing-box-darwin-amd64.tar.gz
+          asset_path: app-darwin-amd64.tar.gz
+          asset_name: app-darwin-amd64.tar.gz
           asset_content_type: application/gzip
           
       - if: steps.check_version.outputs.RUN == 'true'
@@ -89,8 +89,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: sing-box-linux-armv5.tar.gz
-          asset_name: sing-box-linux-armv5.tar.gz
+          asset_path: app-linux-armv5.tar.gz
+          asset_name: app-linux-armv5.tar.gz
           asset_content_type: application/gzip
           
       - if: steps.check_version.outputs.RUN == 'true'
@@ -99,6 +99,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: sing-box-linux-amd64.tar.gz
-          asset_name: sing-box-linux-amd64.tar.gz
+          asset_path: app-linux-amd64.tar.gz
+          asset_name: app-linux-amd64.tar.gz
           asset_content_type: application/gzip
