@@ -29,8 +29,8 @@ jobs:
             exit
           }
           
-          upstream_version=$(jq -r 'map(select(.prerelease)) | first | .tag_name' <<< $(curl --silent https://api.github.com/repos/SagerNet/sing-box/releases))
-          release_version=$(jq -r 'map(select(.prerelease)) | first | .tag_name' <<< $(curl --silent https://api.github.com/repos/goofw/app/releases))
+          #upstream_version=$(jq -r 'map(select(.prerelease)) | first | .tag_name' <<< $(curl --silent https://api.github.com/repos/SagerNet/sing-box/releases))
+          #release_version=$(jq -r 'map(select(.prerelease)) | first | .tag_name' <<< $(curl --silent https://api.github.com/repos/goofw/app/releases))
           [ "$upstream_version" != "$release_version" ] && {
             echo "VERSION=$upstream_version" >> $GITHUB_ENV
             echo "PRERELEASE=true" >> $GITHUB_ENV
