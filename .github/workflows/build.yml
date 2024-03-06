@@ -62,6 +62,8 @@ jobs:
           tar -zcvf sing-box-linux-armv5.tar.gz sing-box
           CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -v -trimpath -tags "with_quic,with_grpc,with_wireguard,with_gvisor,with_acme" -ldflags "-s -w -buildid=" ./cmd/sing-box
           mv sing-box app && tar -zcvf app-linux-amd64.tar.gz app
+          CGO_ENABLED=0 GOOS=freebsd GOARCH=amd64 go build -v -trimpath -tags "with_quic,with_grpc,with_wireguard,with_gvisor,with_acme" -ldflags "-s -w -buildid=" ./cmd/sing-box
+          mv sing-box app && tar -zcvf app-freebsd-amd64.tar.gz app
           
       - if: steps.check_version.outputs.RUN == 'true'
         id: create_release
@@ -101,4 +103,14 @@ jobs:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: app-linux-amd64.tar.gz
           asset_name: app-linux-amd64.tar.gz
+          asset_content_type: application/gzip
+
+      - if: steps.check_version.outputs.RUN == 'true'
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: app-freebsd-amd64.tar.gz
+          asset_name: app-freebsd-amd64.tar.gz
           asset_content_type: application/gzip
