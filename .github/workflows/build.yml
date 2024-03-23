@@ -55,6 +55,16 @@ jobs:
           
       - if: steps.check_version.outputs.RUN == 'true'
         run: |
+          sed -i '/type DNSOptions struct/a Hosts map[string]string `json:"hosts,omitempty"`' option/dns.go
+          sed -i '/type Router struct/a dnsHosts map[string]string' route/router.go
+          sed -i '/router := &Router/a dnsHosts: dnsOptions.Hosts,' route/router.go
+          sed -i '/metadata.Domain = domain/a if _, ok := r.dnsHosts[domain]; ok { \
+            if ip, ok := netip.ParseAddr(r.dnsHosts[domain]); ok == nil { \
+              responseAddrs = append(responseAddrs, ip) \
+              return responseAddrs, err \
+            } \
+          }' route/router_dns.go
+        
           cp patch/common/redir/redir_darwin.go common/redir/redir_darwin.go
           CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 go build -v -trimpath -tags "with_quic,with_grpc,with_ech,with_utls,with_wireguard,with_gvisor" -ldflags "-s -w -buildid=" ./cmd/sing-box
           tar -zcvf sing-box-darwin-amd64.tar.gz sing-box
