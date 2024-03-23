@@ -62,8 +62,7 @@ jobs:
           cat route/router.go
           sed -i '/metadata.Domain = domain/a if _, ok := r.dnsHosts[domain]; ok { \
             if ip, ok := netip.ParseAddr(r.dnsHosts[domain]); ok == nil { \
-              responseAddrs = append(responseAddrs, ip) \
-              return responseAddrs, err \
+              return []netip.Addr{ip}, ok \
             } \
           }' route/router_dns.go
           cat route/router_dns.go
