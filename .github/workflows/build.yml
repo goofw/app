@@ -81,8 +81,8 @@ jobs:
           CGO_ENABLED=0 GOOS=freebsd GOARCH=amd64 go build -v -trimpath -tags "with_quic,with_grpc,with_wireguard,with_gvisor,with_acme" -ldflags "-s -w -buildid=" ./cmd/sing-box
           mv sing-box app && tar -zcvf app-freebsd-amd64.tar.gz app
 
-      - if: ${{ github.event_name != 'schedule' }}
-        run: echo "VERSION=$VERSION-$(date +%s)" >> $GITHUB_ENV
+      #- if: ${{ github.event_name != 'schedule' }}
+      #  run: echo "VERSION=$VERSION-$(date +%s)" >> $GITHUB_ENV
           
       - if: steps.check_version.outputs.RUN == 'true'
         id: create_release
