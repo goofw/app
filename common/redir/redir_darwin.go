@@ -12,8 +12,8 @@ import (
 func GetOriginalDestination(conn net.Conn) (destination netip.AddrPort, err error) {
     addr, err := lookup(conn.RemoteAddr().(*net.TCPAddr))
     if err != nil {
-		return netip.AddrPort{}, err
-	}
+        return netip.AddrPort{}, err
+    }
     return addr.AddrPort(), nil
 }
 
